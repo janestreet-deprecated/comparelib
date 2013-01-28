@@ -247,7 +247,7 @@ struct
 
   let display_numbers (num_runs,f) poly mono =
     let square x = x *. x in
-    let arr = Array.create num_runs (0.,0.) in
+    let arr = Array.create ~len:num_runs (0.,0.) in
     let sum_poly = ref 0. in
     let sum_mono = ref 0. in
     for i = 1 to num_runs do
@@ -256,8 +256,8 @@ struct
       sum_poly := !sum_poly +. time_polycmp;
       sum_mono := !sum_mono +. time_cmp;
     done;
-    let mean_poly = !sum_poly /. (float_of_int num_runs) in
-    let mean_mono = !sum_mono /. (float_of_int num_runs) in
+    let mean_poly = !sum_poly /. (Float.of_int num_runs) in
+    let mean_mono = !sum_mono /. (Float.of_int num_runs) in
     let std_dev_poly = ref 0. in
     let std_dev_mono = ref 0. in
     for i = 0 to num_runs -1 do

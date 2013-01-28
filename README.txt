@@ -62,4 +62,4 @@ Tasking compare for a quick spin
 
 The [preprocess.sh] script will show you the result of applying the syntax
 extension to a file. If you have your type definition in a file [f.ml] you
-can look  at the generated comparaison functions by calling [preprocess.sh f.ml]
+can look  at the generated comparison functions by calling [preprocess.sh f.ml]

@@ -63,8 +63,8 @@ module Bench_nan : Benchable =
 struct
   type t = float with compare
   let description = "NaN"
-  let create_single () =  nan
-  let copy _ = nan
+  let create_single () =  Float.nan
+  let copy _ = Float.nan
   let sufficient_sample = 1000
 end
 
@@ -177,7 +177,7 @@ struct
     let run cmp cmp' =
       let length = Array.length arr in
       let do_it cmp () =
-        for j = 1 to 1000 do
+        for _j = 1 to 1000 do
           for i = 1 to length - 1 do
             let x = Array.get arr i in
             let y = Array.get arr (length - i - 1) in
@@ -196,7 +196,7 @@ struct
     let y = T.copy x in
     let run cmp cmp' =
       let do_it cmp () =
-        for i = 0 to T.sufficient_sample * 1000 do
+        for _i = 0 to T.sufficient_sample * 1000 do
           ignore (cmp x y)
         done
       in
@@ -209,7 +209,7 @@ struct
     let y = T.create_single () in
     let run cmp cmp'  =
       let do_it cmp () =
-        for i = 0 to T.sufficient_sample * 1000 do
+        for _i = 0 to T.sufficient_sample * 1000 do
           ignore (cmp x y)
         done
       in
@@ -223,7 +223,7 @@ struct
   let display_numbers (num_runs,f) poly comp : string =
     let sum_poly = ref 0. in
     let sum_compare = ref 0. in
-    for i = 1 to num_runs do
+    for _i = 1 to num_runs do
       let (time_polycmp,time_compare) =  (f poly comp) in
       sum_poly := !sum_poly +. time_polycmp;
       sum_compare := !sum_compare +. time_compare;

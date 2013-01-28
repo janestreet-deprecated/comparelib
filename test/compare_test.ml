@@ -61,3 +61,34 @@ module M25 = struct type t = String.t with compare end
 module M26 = struct type 'a t = 'a array with compare end
 
 module MyList = struct type 'a t = Nil | Node of 'a * 'a t with compare end
+
+module M27 = struct
+  type t = int with compare
+  module Inner = struct
+    type nonrec t = t list with compare
+    let _ = ((compare : int list -> int list -> int) : t -> t -> int)
+  end
+end
+
+module M28 = struct
+  (* making sure that nobody is reversing the type parameters *)
+  type ('a, 'b) t = ('a * 'b) list with compare
+  let _ = <:compare< (int,float) t >> [(1,nan)]
+end
+
+module Polyrec = struct
+  type ('a, 'b) t = T of ('a option, 'b) t with compare
+
+  type ('a, 'b) t1 = T of ('a option, 'b) t2
+  and ('a, 'b) t2 = T1 of ('a list, 'b) t1 | T2 of ('a, 'b list) t2
+  with compare
+end
+
+module type Variance_sig = sig
+  type +'a t with compare
+end
+
+module Variance = struct
+  type -'a t with compare
+  type (-'a, +'b) u = 'a t * 'b with compare
+end

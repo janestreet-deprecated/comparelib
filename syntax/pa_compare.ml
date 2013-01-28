@@ -1,3 +1,8 @@
+(* Generated code should depend on the environment in scope as little as
+   possible.  E.g. rather than [foo = []] do [match foo with [] ->], to eliminate the
+   use of [=].  It is especially important to not use polymorphic comparisons, since we
+   are moving more and more to code that doesn't have them in scope. *)
+
 
 (* Note: I am introducing a few unnecessary explicit closures,
   (not all of them some are unnecessary due to the value restriction).
@@ -58,7 +63,7 @@ end = struct
     let rec loop t acc =
       match t with
       | Ast.TyApp (_, t, a) -> loop t (a :: acc)
-      | Ast.TyId  (_, id)   -> id, Gen.get_rev_id_path id [], List.rev acc
+      | Ast.TyId  (_, id)   -> id, Gen.get_rev_id_path id [], acc
       | _               -> assert false
     in
     loop ty []
@@ -96,7 +101,7 @@ module Gen_struct = struct
     let loc = Ast.loc_of_ident name in
     match Gen.get_rev_id_path name [] with
     | [ v ] when List.mem ~set:base_types v ->
-      <:expr@loc< Pervasives.compare >>
+      <:expr@loc< (Pervasives.compare : $id:name$ -> $id:name$ -> int) >>
     | ["unit"]         -> <:expr@loc< fun _ _ -> 0 >>
     | "t" :: path ->
       <:expr@loc< $id:Gen.ident_of_rev_path loc ("compare" :: path)$ >>
@@ -130,9 +135,9 @@ module Gen_struct = struct
     | _,["list"], [t] ->
       compare_list t value1 value2
     | name, _, ta ->
-      let args = List.map ta ~f:compare_of_ty_fun in
+      let args = List.map ta ~f:(compare_of_ty_fun ~type_constraint:false) in
       let cmp = Gen.apply _loc (compare_named name) args in
-      <:expr< $cmp$ ($value1$:$ty$) ($value2$:$ty$) >>
+      <:expr< $cmp$ $value1$ $value2$ >>
 
   and compare_list t value1 value2 =
     let loc = Ast.loc_of_ctyp t in
@@ -197,7 +202,13 @@ module Gen_struct = struct
             -> $body$ >> ]
       | <:ctyp< [= $row_fields$ ] >>  | <:ctyp< [< $row_fields$ ] >>
         -> loop row_fields
-      | <:ctyp@loc< $_$ $id:id$ >> as ty ->
+      | <:ctyp@loc< $id:id$ $_$ >> as ty ->
+        (* quite sadly, this code doesn't handle:
+           type 'a id = 'a with compare
+           type t = [ `a | [ `b ] id ] with compare
+           because it will generate a pattern #id, when id is not even a polymorphic
+           variant in the first place.
+           The culprit is caml though, since it only allows #id but not #([`b] id) *)
           let v1 = Gen.gensym ~prefix:"_left" ()
           and v2 = Gen.gensym ~prefix:"_right" () in
           let call = compare_applied ty
@@ -246,10 +257,10 @@ module Gen_struct = struct
           ty)
       in
       let lpatt = List.map ids_ty
-        ~f:(fun (l,_r,ty) -> <:patt@loc< ( $lid:l$ : $ty$ ) >>)
+        ~f:(fun (l,_r,_ty) -> <:patt@loc< $lid:l$ >>)
                   |! bind_pats
       and rpatt = List.map ids_ty
-        ~f:(fun (_l,r,ty) -> <:patt@loc< ( $lid:r$ : $ty$ ) >>)
+        ~f:(fun (_l,r,_ty) -> <:patt@loc< $lid:r$ >>)
                   |! bind_pats
       and body = List.map ids_ty
         ~f:(fun (l,r,ty) ->
@@ -280,7 +291,7 @@ module Gen_struct = struct
   and compare_of_ty ty value1 value2 =
     match ty with
     | <:ctyp@loc< $id:id$ >> ->
-        <:expr@loc<$compare_named id$ ($value1$:$ty$) ($value2$:$ty$) >>
+        <:expr@loc<$compare_named id$ $value1$ $value2$ >>
     | <:ctyp< $_$ $_$ >> -> compare_applied ty value1 value2
     | <:ctyp< $tup:t$ >> -> compare_of_tuple t value1 value2
     | <:ctyp@loc< '$name$ >> ->
@@ -291,11 +302,16 @@ module Gen_struct = struct
       compare_variant variants value1 value2
     | ty -> Gen.unknown_type ty "compare_of_ty"
 
-  and compare_of_ty_fun ty =
+  and compare_of_ty_fun ~type_constraint ty =
     let _loc = Ast.loc_of_ctyp ty in
     let a = Gen.gensym ~prefix:"a" () in
     let b = Gen.gensym ~prefix:"b" () in
-    <:expr< fun ( $lid:a$ : $ty$) ( $lid:b$ : $ty$) ->
+    let mk_pat x =
+      if type_constraint then
+        <:patt< ($lid:x$ : $ty$) >>
+      else
+        <:patt< $lid:x$ >> in
+    <:expr< fun $mk_pat a$ $mk_pat b$ ->
       $compare_of_ty ty <:expr< $lid:a$ >> <:expr< $lid:b$ >> $ >>
 
   let compare_of_record ctype value1 value2 =
@@ -310,7 +326,35 @@ module Gen_struct = struct
       in
       phys_equal_first value1 value2 expr
 
+  let compare_of_nil loc type_name v_a v_b =
+    let str =
+      Printf.sprintf "Compare called on the type %s, which is abtract in an implementation."
+        type_name in
+    <:expr@loc< let _ = $v_a$ in let _ = $v_b$ in failwith $str:str$ >>
+
+  let scheme_of_td loc type_name tps =
+    let mk_compare_type ty =
+      <:ctyp@loc< $ty$ -> $ty$ -> int >> in
+    let type_type_name =
+      List.fold_left ~f:(fun acc v -> <:ctyp@loc< $acc$ $v$ >>)
+        ~init:<:ctyp@loc< $lid:type_name$ >>
+        tps in
+    let type_ =
+      List.fold_right ~f:(fun v acc -> <:ctyp@loc< $mk_compare_type v$ -> $acc$ >>)
+        tps ~init:(mk_compare_type type_type_name) in
+    let quantifiers =
+      match tps with
+      | [] -> None
+      | h :: t ->
+        Some (
+          List.fold_left ~f:(fun acc v -> <:ctyp@loc< $acc$ $v$ >>) ~init:h t
+        ) in
+    match quantifiers with
+    | None -> type_
+    | Some q -> <:ctyp@loc< ! $q$ . $type_$ >>
+
   let compare_of_td loc type_name tps rhs =
+    let tps = List.map ~f:Gen.drop_variance_annotations tps in
     let a = Gen.gensym ~prefix:"a" () in
     let b = Gen.gensym ~prefix:"b" () in
     let v_a = <:expr@loc< $lid:a$ >> in
@@ -322,7 +366,7 @@ module Gen_struct = struct
           ~sum:(fun _loc ty -> compare_sum ty v_a v_b)
           ~variants:(fun _loc ty -> compare_variant ty v_a v_b)
           ~mani:(fun (_:Loc.t) _tp1 tp2 -> loop tp2)
-          ~nil:(fun _ -> assert false)
+          ~nil:(fun loc -> compare_of_nil loc type_name v_a v_b)
           ~record:(fun _loc ty -> compare_of_record ty v_a v_b)
           tp
       in
@@ -339,7 +383,7 @@ module Gen_struct = struct
       else
         "compare_" ^ type_name
     $ >> in
-    <:binding@loc< $bnd$ = $Gen.abstract loc patts body$ >>
+    <:binding@loc< $bnd$ = ($Gen.abstract loc patts body$ : $scheme_of_td loc type_name tps$) >>
 
   let rec compare_of_tds = function
      | Ast.TyDcl (loc, type_name, tps, rhs, _cl) ->
@@ -348,13 +392,13 @@ module Gen_struct = struct
        <:binding@loc< $compare_of_tds tp1$ and $compare_of_tds tp2$ >>
      | _ -> assert false  (* impossible *)
 
-  let compare_of tds =
+  let compare_of rec_ tds =
     let binding, recursive,loc =
       match tds with
       | Ast.TyDcl (loc, type_name, tps, rhs, _cl) ->
           compare_of_td loc type_name tps rhs,
-          Gen.type_is_recursive type_name rhs, loc
-      | <:ctyp@loc< $_$ and $_$ >> as tds -> compare_of_tds tds, true, loc
+          rec_ && Gen.type_is_recursive type_name rhs, loc
+      | <:ctyp@loc< $_$ and $_$ >> as tds -> compare_of_tds tds, rec_, loc
       | _ -> assert false  (* impossible *)
     in
     let body =
@@ -377,7 +421,7 @@ module Gen_sig = struct
       let tp = Gen.drop_variance_annotations tp in
       let loc = Ast.loc_of_ctyp tp in
       let compare_of = sig_of_td__loop <:ctyp@loc< $typ$ $tp$ >> tps in
-      <:ctyp@loc< ( $tp$  -> int ) -> $compare_of$ >>
+      <:ctyp@loc< ( $tp$ -> $tp$ -> int ) -> $compare_of$ >>
 
   let sig_of_td loc type_name tps _rhs _cl =
     let compare_of = sig_of_td__loop <:ctyp@loc< $lid:type_name$ >> tps in
@@ -387,11 +431,11 @@ module Gen_sig = struct
     in
     <:sig_item@loc< value $lid: name$ : $compare_of$ >>
 
-  let rec sig_of_tds = function
+  let rec sig_of_tds _rec = function
     | Ast.TyDcl (loc, type_name, tps, rhs, cl) ->
       sig_of_td loc type_name tps rhs cl
     | <:ctyp@loc< $tp1$ and $tp2$ >> ->
-      <:sig_item@loc< $sig_of_tds tp1$; $sig_of_tds tp2$ >>
+      <:sig_item@loc< $sig_of_tds _rec tp1$; $sig_of_tds _rec tp2$ >>
     | _ -> assert false  (* impossible *)
 end
 
@@ -399,12 +443,12 @@ module Gen_quote = struct
   let parse loc _loc_name_opt cnt_str =
     Pa_type_conv.set_conv_path_if_not_set loc;
     let ctyp = Gram.parse_string Syntax.ctyp_quot loc cnt_str in
-    Gen_struct.compare_of_ty_fun ctyp
+    Gen_struct.compare_of_ty_fun ~type_constraint:true ctyp
 end
 
 let () =
   Syntax.Quotation.add "compare" Syntax.Quotation.DynAst.expr_tag
     Gen_quote.parse
 
-let () = Pa_type_conv.add_sig_generator "compare" Gen_sig.sig_of_tds
+let () = Pa_type_conv.add_sig_generator ~delayed:true "compare" Gen_sig.sig_of_tds
 let () = Pa_type_conv.add_generator "compare" Gen_struct.compare_of

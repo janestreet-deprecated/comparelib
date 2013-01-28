@@ -33,12 +33,12 @@ struct
   let a = 42 in
   let b = 46 in
   let f () =
-    for i = 1 to 200000000 do
+    for _i = 1 to 200000000 do
       ignore(compare a b)
     done
   in
   let g () =
-    for i = 1 to 200000000 do
+    for _i = 1 to 200000000 do
       ignore(compare (a:int) (b:int))
     done
   in
@@ -64,12 +64,12 @@ struct
   let a = 42. in
   let b = 46. in
   let f () =
-    for i = 1 to 200000000 do
+    for _i = 1 to 200000000 do
       ignore(compare a b)
     done
   in
   let g () =
-    for i = 1 to 200000000 do
+    for _i = 1 to 200000000 do
       ignore(compare (a:float) (b:float))
     done
   in
