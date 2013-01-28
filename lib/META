@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 0325a903f3b44f10e0237717ccaceaec)
-version = "108.07.01"
+# DO NOT EDIT (digest: cce1267f37c0276c01eeec9b57c71bc9)
+version = "108.08.00"
 description =
 "Syntax extension for deriving \"compare\" functions automatically."
 archive(byte) = "comparelib.cma"
@@ -9,7 +9,7 @@ archive(native) = "comparelib.cmxa"
 archive(native, plugin) = "comparelib.cmxs"
 exists_if = "comparelib.cma"
 package "syntax" (
- version = "108.07.01"
+ version = "108.08.00"
  description = "Syntax extension for \"with compare\""
  requires = "camlp4 type_conv comparelib"
  archive(syntax, preprocessor) = "pa_compare.cma"

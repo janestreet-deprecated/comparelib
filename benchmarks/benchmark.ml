@@ -73,8 +73,8 @@ module Bench_nan : Benchable =
 struct
   type t = float with compare
   let description = "NaN"
-  let create_single () =  nan
-  let copy _ = nan
+  let create_single () =  Float.nan
+  let copy _ = Float.nan
   let sufficient_sample = 1000
 end
 
@@ -176,7 +176,7 @@ struct
     let run cmp cmp'  =
       let length = Array.length arr in
       let do_it cmp () =
-        for j = 1 to 1000 do
+        for _j = 1 to 1000 do
           for i = 0 to length - 1 do
             let x = Array.get arr i in
             let y = Array.get arr (length - i - 1) in
@@ -194,7 +194,7 @@ struct
     let x = T.create_single () in
     let run cmp cmp'   =
       let do_it cmp () =
-        for i = 0 to T.sufficient_sample * 1000 do
+        for _i = 0 to T.sufficient_sample * 1000 do
           ignore (cmp x x)
         done
       in
@@ -207,7 +207,7 @@ struct
     let y = T.copy x in
     let run cmp cmp'   =
       let do_it cmp () =
-        for i = 0 to T.sufficient_sample * 1000 do
+        for _i = 0 to T.sufficient_sample * 1000 do
           ignore (cmp x y)
         done
       in
@@ -222,7 +222,7 @@ struct
     let y = T.create_single () in
     let run cmp cmp'  =
       let do_it cmp () =
-        for i = 0 to T.sufficient_sample * 1000 do
+        for _i = 0 to T.sufficient_sample * 1000 do
           ignore (cmp x y)
         done
       in
@@ -329,3 +329,8 @@ let () =
   BM.all_tests ();
   BV.all_tests ();
   BNI.all_tests ()
+
+type foo = A | B
+and  bar = C | D
+  with random
+

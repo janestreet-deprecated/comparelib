@@ -1,7 +1,4 @@
-(* Generated code should depend on the environment in scope as little as
-   possible.  E.g. rather than [foo = []] do [match foo with [] ->], to eliminate the
-   use of [=].  It is especially important to not use polymorphic comparisons, since we
-   are moving more and more to code that doesn't have them in scope. *)
+(* Generated code should depend on the environment in scope as little as possible.  E.g. rather than [foo = []] do [match foo with [] ->], to eliminate the use of [=].  It is especially important to not use polymorphic comparisons, since we are moving more and more to code that doesn't have them in scope. *)
 
 
 (* Note: I am introducing a few unnecessary explicit closures,
@@ -152,29 +149,29 @@ module Gen_struct = struct
           in if n = 0 then loop xs ys else n ]
       in loop $value1$ $value2$ >>
 
-  and compare_array t value1 value2 =
-    let loc = Ast.loc_of_ctyp t in
-    <:expr@loc<
-      if Pervasives.(==) $value1$ $value2$ then
-        0
-      else
-        let len_a = Array.length $value1$ in
-        let len_b = Array.length $value2$ in
-        let ret = Pervasives.compare len_a len_b in
-        if ret <> 0 then ret
+    and compare_array t value1 value2 =
+      let loc = Ast.loc_of_ctyp t in
+      <:expr@loc<
+        if Pervasives.(==) $value1$ $value2$ then
+          0
         else
-          let rec loop i =
-            if i = len_a then
-              0
-            else
-              let l = Array.unsafe_get $value1$ i
-              and r = Array.unsafe_get $value2$ i in
-              let res = $compare_of_ty t <:expr@loc< l >> <:expr@loc< r >>$ in
-              if res <> 0 then res
-              else loop (i+1)
-          in
-          loop 0
-        >>
+          let len_a = Array.length $value1$ in
+          let len_b = Array.length $value2$ in
+          let ret = Pervasives.compare len_a len_b in
+          if ret <> 0 then ret
+          else
+            let rec loop i =
+              if i = len_a then
+                0
+              else
+                let l = Array.unsafe_get $value1$ i
+                and r = Array.unsafe_get $value2$ i in
+                let res = $compare_of_ty t <:expr@loc< l >> <:expr@loc< r >>$ in
+                if res <> 0 then res
+                else loop (i+1)
+            in
+            loop 0
+          >>
 
 
   and compare_of_tuple t value1 value2 =
