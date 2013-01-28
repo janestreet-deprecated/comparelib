@@ -89,7 +89,7 @@ module Gen_struct = struct
      | [x] -> x
      | x :: xs ->
        let loc = Ast.loc_of_expr x in
-       <:expr@loc< let ret = $x$ in if ret <> 0 then ret else $chain_if xs$ >>
+       <:expr@loc< let ret = $x$ in if Pervasives.(<>) ret 0 then ret else $chain_if xs$ >>
 
   let base_types =
     [ "nativeint"; "int64"; "int32"; "char"; "int"; "bool"; "string"; "float" ]
@@ -146,7 +146,7 @@ module Gen_struct = struct
         | (_, []) -> 1
         | ([x :: xs], [y :: ys]) ->
           let n = $compare_of_ty t <:expr@loc< x >> <:expr@loc< y >>$
-          in if n = 0 then loop xs ys else n ]
+          in if Pervasives.(=) n 0 then loop xs ys else n ]
       in loop $value1$ $value2$ >>
 
     and compare_array t value1 value2 =
@@ -158,16 +158,16 @@ module Gen_struct = struct
           let len_a = Array.length $value1$ in
           let len_b = Array.length $value2$ in
           let ret = Pervasives.compare len_a len_b in
-          if ret <> 0 then ret
+          if Pervasives.(<>) ret 0 then ret
           else
             let rec loop i =
-              if i = len_a then
+              if Pervasives.(=) i len_a then
                 0
               else
                 let l = Array.unsafe_get $value1$ i
                 and r = Array.unsafe_get $value2$ i in
                 let res = $compare_of_ty t <:expr@loc< l >> <:expr@loc< r >>$ in
-                if res <> 0 then res
+                if Pervasives.(<>) res 0 then res
                 else loop (i+1)
             in
             loop 0

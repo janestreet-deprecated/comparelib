@@ -1,3 +1,16 @@
+let ( = ) = `Should_refer_to_pervasives_explicitely
+let ( <> ) = `Should_refer_to_pervasives_explicitely
+let ( == ) = `Should_refer_to_pervasives_explicitely
+let ( != ) = `Should_refer_to_pervasives_explicitely
+let ( > ) = `Should_refer_to_pervasives_explicitely
+let ( < ) = `Should_refer_to_pervasives_explicitely
+let ( >= ) = `Should_refer_to_pervasives_explicitely
+let ( <= ) = `Should_refer_to_pervasives_explicitely
+let ( max ) = `Should_refer_to_pervasives_explicitely
+let ( min ) = `Should_refer_to_pervasives_explicitely
+let ( equal ) = `Should_refer_to_pervasives_explicitely
+let ( compare ) = `Should_refer_to_pervasives_explicitely
+
 module M1 = struct type t = unit with compare end
 
 module M2 = struct type t = int with compare end
