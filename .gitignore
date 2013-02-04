@@ -82,7 +82,6 @@ bisect-1.1/Makefile.config
 \#*
 .\#*
 /_build
-/lib/comparelib_dummy.ml
 /sample_output/generated_test.ml
 /sample_output/generated_test.mli
 /setup.data
