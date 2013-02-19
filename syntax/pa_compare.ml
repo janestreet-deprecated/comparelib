@@ -277,7 +277,9 @@ module Gen_struct = struct
     | <:ctyp@loc< $tp1$ | $tp2$ >> ->
       <:match_case@loc< $branches_of_sum ~rightmost:false tp1$
               | $branches_of_sum ~rightmost tp2$ >>
-    | _ -> assert false
+    | <:ctyp< $_$ : $_$ >> as tp -> Gen.error tp ~fn:"branches_of_sum"
+      ~msg:"GADTs are not supported by comparelib"
+    | tp -> Gen.unknown_type tp "branches_of_sum"
 
   and compare_sum ctype value1 value2 =
     let loc = Ast.loc_of_ctyp ctype in
