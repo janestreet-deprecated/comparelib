@@ -121,8 +121,8 @@ module Gen_struct = struct
         <:expr<
           match ($value1$, $value2$) with [
             (None, None)   -> 0
-          | (None, Some _) -> 1
-          | (Some _, None) -> -1
+          | (None, Some _) -> -1
+          | (Some _, None) -> 1
           | (Some $lid:a$, Some $lid:b$) ->
             $compare_of_ty t <:expr< $lid:a$ >> <:expr< $lid:b$ >> $
         ]

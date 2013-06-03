@@ -105,3 +105,15 @@ module Variance = struct
   type -'a t with compare
   type (-'a, +'b) u = 'a t * 'b with compare
 end
+
+module Test = struct
+  let (=) : int -> int -> bool = Pervasives.(=)
+  (* checking that for the types mentioned in the readme, we compare structurally  *)
+  TEST = <:compare< unit option >> None (Some ()) = Pervasives.compare None (Some ())
+  TEST = <:compare< unit list >> [] [()] = Pervasives.compare [] [()]
+  TEST = <:compare< int array >> [|0; 1|] [|1|] = Pervasives.compare [|0; 1|] [|1|]
+  TEST =
+    Pervasives.(=)
+      (List.sort <:compare< int option >> [Some 3; None; Some 2; Some 1])
+      [None; Some 1; Some 2; Some 3]
+end
