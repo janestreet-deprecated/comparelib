@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 3f91969182f3d7c81ed47c586171e29f) *)
+(* DO NOT EDIT (digest: 5281b70b5587f344b01f3b1b620488cb) *)
 This is the INSTALL file for the comparelib distribution.
 
 This package uses OASIS to generate its build system. See section OASIS for
@@ -24,7 +24,7 @@ Installing
 Uninstalling
 ============
 
-1. Go to the root of the package 
+1. Go to the root of the package
 2. Run 'ocaml setup.ml -uninstall'
 
 OASIS
