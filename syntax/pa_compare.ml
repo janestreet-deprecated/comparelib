@@ -212,8 +212,7 @@ module Gen_struct = struct
             <:expr@loc< $lid:v1$>>
             <:expr@loc< $lid:v2$>>
           in
-          [ <:match_case@loc< ((#$id$ as $lid:v1$),(#$id$ as $lid:v2$)) ->
-          $call$ $lid:v1$ $lid:v2$ >> ]
+          [ <:match_case@loc< ((#$id$ as $lid:v1$),(#$id$ as $lid:v2$)) -> $call$ >> ]
       | <:ctyp@loc< $id:id$ >> ->
           let call = compare_named id in
           let v1 = Gen.gensym ~prefix:"_left" ()

@@ -1,3 +1,4 @@
+let ignore = `Should_refer_to_pervasives_explicitely
 let ( = ) = `Should_refer_to_pervasives_explicitely
 let ( <> ) = `Should_refer_to_pervasives_explicitely
 let ( == ) = `Should_refer_to_pervasives_explicitely
@@ -116,4 +117,11 @@ module Test = struct
     Pervasives.(=)
       (List.sort <:compare< int option >> [Some 3; None; Some 2; Some 1])
       [None; Some 1; Some 2; Some 3]
+end
+
+module Variant_inclusion = struct
+  type 'a type1 = [ `T1 of 'a ] with compare
+  type 'a type2 = [ 'a type1 | `T2 ] with compare
+  type 'a type3 = [ `T3 | 'a type1 ] with compare
+  type 'a type4 = [ 'a type2 | `T4 | 'a type3 ] with compare
 end
