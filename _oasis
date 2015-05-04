@@ -22,7 +22,7 @@ Library comparelib
   XMETAType:          library
 
 Library pa_compare
-  Path:               syntax
+  Path:               src
   Modules:            Pa_compare
   FindlibParent:      comparelib
   FindlibName:        syntax
