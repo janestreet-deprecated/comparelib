@@ -85,7 +85,7 @@ struct
   type t = float array with compare
   let description = "float array"
   let create_single () =
-    Array.init (Random.int 100) ~f:fun _ -> Random.float 1000.
+    Array.init (Random.int 100) ~f:(fun _ -> Random.float 1000.)
   let copy arr = Array.init (Array.length arr) ~f:(fun i -> Array.get arr i)
   let sufficient_sample = 1000
 end
